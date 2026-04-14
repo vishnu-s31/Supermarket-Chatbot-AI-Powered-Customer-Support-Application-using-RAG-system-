@@ -196,9 +196,6 @@ http://localhost:5000
 
 ---
 
-## 📞 Contact
 
-Developed by: **Naveen Kumar**
-📧 naveenpalani75@gmail.com
 
 
