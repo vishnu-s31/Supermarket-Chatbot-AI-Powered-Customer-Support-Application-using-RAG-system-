@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Supermarket Chatbot</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: 'Poppins', sans-serif;
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+        .chat-wrapper {
+            width: 100%;
+            max-width: 600px;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            height: 80vh;
+        }
+        .chat-header {
+            background: #007bff;
+            color: white;
+            padding: 15px 20px;
+            text-align: center;
+            border-bottom: 1px solid #ddd;
+        }
+        .chat-header h1 {
+            font-size: 1.5rem;
+            font-weight: 600;
+            margin-bottom: 5px;
+        }
+        .chat-header p {
+            font-size: 0.9rem;
+            opacity: 0.8;
+        }
+        .chat-container {
+            flex: 1;
+            padding: 20px;
+            overflow-y: auto;
+            background: #f9f9f9;
+        }
+        .chat-message {
+            margin: 10px 0;
+            display: flex;
+            flex-direction: column;
+        }
+        .user-message, .bot-message, .error-message {
+            max-width: 80%;
+            padding: 10px 15px;
+            border-radius: 15px;
+            margin-bottom: 5px;
+            line-height: 1.4;
+            font-size: 0.95rem;
+        }
+        .user-message {
+            background: #007bff;
+            color: white;
+            align-self: flex-end;
+            border-bottom-right-radius: 5px;
+        }
+        .bot-message {
+            background: #e9ecef;
+            color: #333;
+            align-self: flex-start;
+            border-bottom-left-radius: 5px;
+        }
+        .error-message {
+            background: #f8d7da;
+            color: #721c24;
+            align-self: flex-start;
+            border-bottom-left-radius: 5px;
+        }
+        .chat-input {
+            padding: 15px 20px;
+            border-top: 1px solid #ddd;
+            background: white;
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+        .chat-input form {
+            flex: 1;
+            display: flex;
+            gap: 10px;
+        }
+        .chat-input input[type="text"] {
+            flex: 1;
+            padding: 10px 15px;
+            border: 1px solid #ddd;
+            border-radius: 25px;
+            font-size: 0.95rem;
+            outline: none;
+            transition: border-color 0.3s;
+        }
+        .chat-input input[type="text"]:focus {
+            border-color: #007bff;
+        }
+        .chat-input button {
+            padding: 10px 20px;
+            background: #007bff;
+            color: white;
+            border: none;
+            border-radius: 25px;
+            cursor: pointer;
+            font-size: 0.95rem;
+            transition: background 0.3s;
+        }
+        .chat-input button:hover {
+            background: #0056b3;
+        }
+        .clear-btn {
+            background: #dc3545;
+            padding: 10px 15px;
+            border-radius: 25px;
+            font-size: 0.9rem;
+        }
+        .clear-btn:hover {
+            background: #c82333;
+        }
+        .loading {
+            display: none;
+            font-size: 0.9rem;
+            color: #666;
+            align-self: flex-start;
+            margin: 10px 0;
+        }
+        .loading::after {
+            content: ' .';
+            animation: dots 1.5s infinite;
+        }
+        @keyframes dots {
+            0% { content: ' .'; }
+            33% { content: ' ..'; }
+            66% { content: ' ...'; }
+        }
+        @media (max-width: 600px) {
+            .chat-wrapper {
+                height: 90vh;
+                border-radius: 10px;
+            }
+            .chat-header h1 {
+                font-size: 1.2rem;
+            }
+            .chat-header p {
+                font-size: 0.8rem;
+            }
+            .chat-input {
+                padding: 10px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="chat-wrapper">
+        <div class="chat-header">
+            <h1>🛒 Supermarket Customer Support Chatbot</h1>
+            <p>Ask about product availability, prices, or anything else!</p>
+        </div>
+        <div class="chat-container" id="chat-container">
+            {% for chat in chat_history %}
+                <div class="chat-message">
+                    <div class="user-message">You: {{ chat.query }}</div>
+                    <div class="{% if 'Error' in chat.response %}error-message{% else %}bot-message{% endif %}">
+                        Chatbot: {{ chat.response }}
+                    </div>
+                </div>
+            {% endfor %}
+            <div class="loading" id="loading">Processing</div>
+        </div>
+        <div class="chat-input">
+            <form method="POST" action="/" onsubmit="showLoading()">
+                <input type="text" name="query" placeholder="e.g., How much is orange (1kg)?" required>
+                <button type="submit">Ask</button>
+            </form>
+            <button class="clear-btn" onclick="clearChat()">Clear Chat</button>
+        </div>
+    </div>
+    <script>
+        function showLoading() {
+            document.getElementById('loading').style.display = 'block';
+            document.getElementById('chat-container').scrollTop = document.getElementById('chat-container').scrollHeight;
+        }
+        function clearChat() {
+            if (confirm('Are you sure you want to clear the chat history?')) {
+                fetch('/clear_chat', { method: 'POST' })
+                    .then(() => location.reload())
+                    .catch(err => alert('Error clearing chat: ' + err));
+            }
+        }
+        window.onload = () => {
+            document.getElementById('chat-container').scrollTop = document.getElementById('chat-container').scrollHeight;
+        };
+    </script>
+</body>
+</html>
